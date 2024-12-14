@@ -1,10 +1,13 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_file
 import app.__init__ as dd
 from config.settings import tables
 import app.models as sp
+from flask_cors import CORS
+import os
 
 # Khởi tạo Blueprint
 api_routes = Blueprint("api_routes", __name__)
+CORS(api_routes)
 
 # Tải các mô hình
 models = []
@@ -13,6 +16,17 @@ for name_mode in tables:
     models.append(new_model)
 
 model_manager = dd.ModelManager()
+
+# API trả về nội dung ChatBot.html trực tiếp trên trình duyệt
+@api_routes.route('/chatbot_html', methods=['GET'])
+def chatbot_html():
+    try:
+        # Đường dẫn đến thư mục chứa tệp ChatBot.html
+        file_path = os.path.join(os.getcwd(), 'chatbot.html')  # Đảm bảo đường dẫn đúng
+        # Trả về tệp HTML
+        return send_file(file_path)
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
 
 # API trả về dự đoán đầu
 @api_routes.route('/du_doan', methods=['POST'])

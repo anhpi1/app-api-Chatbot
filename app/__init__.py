@@ -130,7 +130,8 @@ class ModelManager:
         self.model_du_doan_khong_gom_true_false = None
 
     def final_du_doan(self, question, models, true_answer=None):
-        
+        temp1=[]
+        temp2=[]
         print("question: {}".format(question))
         if true_answer is not None:
             print("du doan    :{}".format(self.model_du_doan))
@@ -150,13 +151,60 @@ class ModelManager:
         # Tìm kiếm trong SQL Server
         con = sp.search_with_conditions_sqlserver(self.model_du_doan)
         if con:
+            temp1.append("{}".format(self.model_du_doan))
+            temp2.append("{}".format(translate_label(self.model_du_doan)))
             final_answer.append(con[0])
         for row in answer:
             con = sp.search_with_conditions_sqlserver(row)
             if con:
+                temp1.append("{}".format(row))
+                temp2.append("{}".format(translate_label(row)))
                 final_answer.append(con[0])
-
+        file_path="data_user.json"
+        new_data={
+            "cau_hoi":question,
+            "nhan_so":temp1,
+            "nhan_chu":temp2,
+            "cau_tra_loi":final_answer
+        }
+        WriteUserQuestion(file_path, new_data)
         return final_answer
+
+import json
+
+def WriteUserQuestion(file_path, new_data):
+    try:
+        # Mở file và đọc nội dung hiện tại
+        with open(file_path, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+        
+        # Kiểm tra nếu file chứa một danh sách
+        if isinstance(data, list):
+            data.append(new_data)  # Thêm dữ liệu mới vào danh sách
+        else:
+            raise ValueError("Dữ liệu trong file JSON không phải là danh sách.")
+    
+    except FileNotFoundError:
+        # Nếu file không tồn tại, tạo một danh sách mới
+        data = [new_data]
+    
+    # Ghi lại dữ liệu vào file
+    with open(file_path, 'w', encoding='utf-8') as file:
+        json.dump(data, file, ensure_ascii=False, indent=4)
+
+
+
+def translate_label(rows):
+    trans=[]
+    for row,table in zip(rows,tables):
+        temp=tkj.search_content_lable(table,row)[0]
+        if(temp is not None):
+            trans.append(temp)
+            continue
+        else:
+            trans.append("")
+    return trans
+
 
 def check_model_loading(model_list):
     
@@ -192,13 +240,17 @@ def check_model_loading(model_list):
 #         file.write("\n")
 #         file.write("\n")
 
-# Tải danh sách các mô hình
+# #Tải danh sách các mô hình
 # model_manager = ModelManager()
 # models = []
-# for name_mode in tables:  # Đảm bảo `tables` đã được định nghĩam
+# for name_mode in tables:  # Đảm bpyảo `tables` đã được định nghĩam
 #     new_model = sp.load_model(name_mode)
 #     models.append(new_model)
 
 # # Thực hiện dự đoán
 # answer = model_manager.final_du_doan("what is comparator ?", models)
+# print(answer)
+# answer = model_manager.final_du_doan("when is comparator ?", models)
+# print(answer)
+# answer = model_manager.final_du_doan("how we use comparator ?", models)
 # print(answer)
